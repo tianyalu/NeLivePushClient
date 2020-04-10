@@ -13,8 +13,8 @@ import java.util.List;
 public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callback {
     private static final String TAG = CameraHelper.class.getSimpleName();
     public int mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
-    public int mWidth = 800;
-    public int mHeight = 480;
+    public int mWidth;
+    public int mHeight;
     private byte[] cameraBuffer;
 
     private Activity mActivity;
@@ -25,8 +25,11 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
     private OnChangedSizeListener mOnChangedSizeListener;
     private int mRotation;
 
-    public CameraHelper(Activity activity) {
+    public CameraHelper(Activity activity, int cameraId, int width, int height) {
         this.mActivity = activity;
+        this.mCameraID = cameraId;
+        this.mWidth = width;
+        this.mHeight = height;
     }
 
     public void setPreviewDisplay(SurfaceHolder surfaceHolder) {

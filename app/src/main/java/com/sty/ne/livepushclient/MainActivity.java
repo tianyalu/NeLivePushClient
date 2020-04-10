@@ -13,12 +13,13 @@ import android.widget.TextView;
 import com.sty.ne.livepushclient.util.PermissionUtils;
 
 public class MainActivity extends AppCompatActivity {
-    private CameraHelper cameraHelper;
+//    private CameraHelper cameraHelper;
     private SurfaceView surfaceView;
     private Button btnSwitchCamera;
     private Button btnStartLive;
     private Button btnStopLive;
     private String[] needPermissions = {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO};
+    private LivePusher mPusher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,17 +37,18 @@ public class MainActivity extends AppCompatActivity {
         btnStartLive = findViewById(R.id.btn_start_live);
         btnStopLive = findViewById(R.id.btn_stop_live);
 
-        cameraHelper = new CameraHelper(this);
-        cameraHelper.setPreviewDisplay(surfaceView.getHolder());
+//        cameraHelper = new CameraHelper(this);
+//        cameraHelper.setPreviewDisplay(surfaceView.getHolder());
+
+        mPusher = new LivePusher(this);
+        mPusher.setPreviewDisplay(surfaceView.getHolder());
     }
 
     private void setListeners() {
         btnSwitchCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(cameraHelper != null) {
-                    cameraHelper.switchCamera();
-                }
+                mPusher.switchCamera();
             }
         });
         btnStartLive.setOnClickListener(new View.OnClickListener() {
@@ -58,9 +60,15 @@ public class MainActivity extends AppCompatActivity {
         btnStopLive.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                mPusher.stopLive();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mPusher.release();
     }
 
     private void requestPermissions() {
@@ -78,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startLive() {
-
+        mPusher.startLive("rtmp://47.115.6.127/myapp/");
     }
 
     @Override
