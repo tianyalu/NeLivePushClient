@@ -12,10 +12,11 @@ import java.util.List;
 
 public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callback {
     private static final String TAG = CameraHelper.class.getSimpleName();
-    public int mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
+    public int mCameraID;
     public int mWidth;
     public int mHeight;
     private byte[] cameraBuffer;
+    private byte[] cameraBuffer_;
 
     private Activity mActivity;
     private SurfaceHolder mSurfaceHolder;
@@ -41,10 +42,10 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
      * 切换摄像头
      */
     public void switchCamera() {
-        if(mCameraID == Camera.CameraInfo.CAMERA_FACING_BACK) {
+        if (mCameraID == Camera.CameraInfo.CAMERA_FACING_BACK) {
             mCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
-        }else {
-            mCameraID =  Camera.CameraInfo.CAMERA_FACING_BACK;
+        } else {
+            mCameraID = Camera.CameraInfo.CAMERA_FACING_BACK;
         }
         stopPreview();
         startPreview();
@@ -67,17 +68,15 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
             setPreviewOrientation(parameters);
             mCamera.setParameters(parameters);
             cameraBuffer = new byte[mWidth * mHeight * 3 / 2];
+            cameraBuffer_ = new byte[mWidth * mHeight * 3 / 2];
             //数据缓冲区
             mCamera.addCallbackBuffer(cameraBuffer);
             mCamera.setPreviewCallbackWithBuffer(this);
             //设置预览画面
             mCamera.setPreviewDisplay(mSurfaceHolder);
-            if(mOnChangedSizeListener != null) {
-                mOnChangedSizeListener.onChanged(mWidth, mHeight);
-            }
             //开启预览
             mCamera.startPreview();
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -86,7 +85,7 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
      * 停止预览
      */
     public void stopPreview() {
-        if(mCamera != null) {
+        if (mCamera != null) {
             //预览数据回调接口
             mCamera.setPreviewCallback(null);
             //停止预览
@@ -111,7 +110,7 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
             Camera.Size next = iterator.next();
             Log.i(TAG, "遍历支持： " + next.width + " x " + next.height);
             int n = Math.abs(next.height * next.width - mWidth * mHeight);
-            if(n < m) {
+            if (n < m) {
                 m = n;
                 size = next;
             }
@@ -130,21 +129,33 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
         switch (mRotation) {
             case Surface.ROTATION_0:
                 degrees = 0;
+                if (mOnChangedSizeListener != null) {
+                    mOnChangedSizeListener.onChanged(mHeight, mWidth);
+                }
                 break;
             case Surface.ROTATION_90: //横屏，左边是头部（home键在右边）
                 degrees = 90;
+                if (mOnChangedSizeListener != null) {
+                    mOnChangedSizeListener.onChanged(mWidth, mHeight);
+                }
                 break;
             case Surface.ROTATION_180:
                 degrees = 180;
+                if (mOnChangedSizeListener != null) {
+                    mOnChangedSizeListener.onChanged(mHeight, mWidth);
+                }
                 break;
             case Surface.ROTATION_270: //横屏，右边边是头部
                 degrees = 270;
+                if (mOnChangedSizeListener != null) {
+                    mOnChangedSizeListener.onChanged(mWidth, mHeight);
+                }
                 break;
             default:
                 break;
         }
         int result;
-        if(info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             result = (info.orientation + degrees) % 360;
             result = (360 - result) % 360; // compensate the mirror
         } else { // back-facing
@@ -156,19 +167,88 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
 
     /**
      * setPreviewCallbackWithBuffer
+     *
      * @param data
      * @param camera
      */
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-        if(mPreviewCallback != null) {
-            mPreviewCallback.onPreviewFrame(data, camera);
+        switch (mRotation) {
+            case Surface.ROTATION_0:
+                rotation90(data);
+                break;
+            case Surface.ROTATION_90: //横屏，左边是头部（home键在右边）
+                break;
+            case Surface.ROTATION_270: //横屏，头部在右边
+                break;
+            default:
+                break;
+        }
+        if (mPreviewCallback != null) {
+            mPreviewCallback.onPreviewFrame(cameraBuffer_, camera);
         }
         camera.addCallbackBuffer(cameraBuffer);
     }
 
+    private void rotation90(byte[] data) {
+        int index = 0;
+        int ySize = mWidth * mHeight;
+        // u 和 v
+        int uvHeight = mHeight / 2;
+        //后置摄像头顺时针旋转90度
+        if(mCameraID == Camera.CameraInfo.CAMERA_FACING_BACK) {
+            //将y的数据转换后放入新的byte数组
+            for (int i = 0; i < mWidth; i++) {
+                for (int j = mHeight - 1; j >= 0; j--) {
+                    cameraBuffer_[index++] = data[mWidth * j + i];
+                }
+            }
+
+            //每次处理两个数组
+            for (int i = 0; i < mWidth; i += 2) {
+                for (int j = uvHeight - 1; j >= 0; j--) {
+                    //v
+                    cameraBuffer_[index++] = data[ySize + mWidth * j + i];
+                    //u
+                    cameraBuffer_[index++] = data[ySize + mWidth * j + i + 1];
+                }
+            }
+        }else {
+            //逆时针旋转90度
+            //            for (int i = 0; i < mWidth; i++) {
+            //                for (int j = 0; j < mHeight; j++) {
+            //                    cameraBuffer_[index++] = data[mWidth * j + mWidth - 1 - i];
+            //                }
+            //            }
+            //            //  u v
+            //            for (int i = 0; i < mWidth; i += 2) {
+            //                for (int j = 0; j < uvHeight; j++) {
+            //                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth - 1 - i - 1];
+            //                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth - 1 - i];
+            //                }
+            //            }
+
+            //旋转并镜像
+            for (int i = 0; i < mWidth; i++) {
+                for (int j = mHeight - 1; j >= 0; j--) {
+                    cameraBuffer_[index++] = data[mWidth * j + mWidth -1 -i];
+                }
+            }
+            // u v
+            for (int i = 0; i < mWidth; i += 2) {
+                for (int j = uvHeight -1; j >= 0; j--) {
+                    //v
+                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth -1 -i -1];
+                    //u
+                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth -1 -i];
+                }
+            }
+        }
+    }
+
     /**
      * surface 创建时回调
+     *
      * @param holder
      */
     @Override
@@ -178,6 +258,7 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
 
     /**
      * surface 发生改变时回调
+     *
      * @param holder
      * @param format
      * @param width
@@ -193,6 +274,7 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
 
     /**
      * 销毁时回调
+     *
      * @param holder
      */
     @Override
