@@ -215,18 +215,18 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
             }
         }else {
             //逆时针旋转90度
-            //            for (int i = 0; i < mWidth; i++) {
-            //                for (int j = 0; j < mHeight; j++) {
-            //                    cameraBuffer_[index++] = data[mWidth * j + mWidth - 1 - i];
-            //                }
-            //            }
-            //            //  u v
-            //            for (int i = 0; i < mWidth; i += 2) {
-            //                for (int j = 0; j < uvHeight; j++) {
-            //                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth - 1 - i - 1];
-            //                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth - 1 - i];
-            //                }
-            //            }
+//            for (int i = 0; i < mWidth; i++) {
+//                for (int j = 0; j < mHeight; j++) {
+//                    cameraBuffer_[index++] = data[mWidth * j + mWidth - 1 - i];
+//                }
+//            }
+//            //  u v
+//            for (int i = 0; i < mWidth; i += 2) {
+//                for (int j = 0; j < uvHeight; j++) {
+//                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth - 1 - i - 1];
+//                    cameraBuffer_[index++] = data[ySize + mWidth * j + mWidth - 1 - i];
+//                }
+//            }
 
             //旋转并镜像
             for (int i = 0; i < mWidth; i++) {
