@@ -54,6 +54,7 @@ public:
             //工作状态并且队列为空，一直等待
             pthread_cond_wait(&cond, &mutex);
         }
+        //TODO 不工作但时如果队列中有数据还可以出队列，这里可能有坑
         if(!q.empty()) {
             value = q.front();
             q.pop();

@@ -369,7 +369,7 @@ android {
 编译运行成功代码集成成功。  
 
 ## 三、`RTMP`视频数据格式
-参考：[https://www.jianshu.com/p/0c882eca979c](https://www.jianshu.com/p/0c882eca979c)  
+参考：[`RTMP`视频数据格式](https://www.jianshu.com/p/0c882eca979c)  
 
 ## 四、`FLV`文件格式
-参考：[https://www.jianshu.com/p/4f6ef65e8b97](https://www.jianshu.com/p/4f6ef65e8b97)  
+参考：[`FLV`文件格式](https://www.jianshu.com/p/4f6ef65e8b97)  

@@ -5,12 +5,29 @@
 #ifndef NELIVEPUSHCLIENT_VIDEOCHANNEL_H
 #define NELIVEPUSHCLIENT_VIDEOCHANNEL_H
 
+#include <pthread.h>
+#include <x264.h>
+#include "macro.h"
 
 class VideoChannel {
 public:
     VideoChannel();
 
     virtual ~VideoChannel();
+
+    void initVideoEncoder(int width, int height, int bitrate, int fps);
+
+
+    void encodeData(uint8_t *data);
+
+private:
+    pthread_mutex_t mutex;
+    int mWidth;
+    int mHeight;
+    int mBitrate;
+    int mFps;
+    x264_t *videoEncoder = 0;
+    x264_picture_t *pic_in = 0;
 };
 
 

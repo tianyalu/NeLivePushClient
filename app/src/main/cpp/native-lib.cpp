@@ -149,7 +149,7 @@ Java_com_sty_ne_livepushclient_LivePusher_pushVideoNative(JNIEnv *env, jobject t
         return;
     }
     jbyte *data = env->GetByteArrayElements(data_, 0);
-    video_channel->encodeData(data);
+    video_channel->encodeData(reinterpret_cast<uint8_t *>(data));
 
     env->ReleaseByteArrayElements(data_, data, 0);
 }
