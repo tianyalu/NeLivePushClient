@@ -373,3 +373,8 @@ android {
 
 ## 四、`FLV`文件格式
 参考：[`FLV`文件格式](https://www.jianshu.com/p/4f6ef65e8b97)  
+
+## 五、扩展参考
+[音视频基础知识](https://www.jianshu.com/p/a2c09daee428)
+[音视频基础知识-图像篇](https://www.jianshu.com/p/0f0ff3d2f5d4)  
+

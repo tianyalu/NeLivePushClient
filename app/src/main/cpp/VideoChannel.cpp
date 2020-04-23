@@ -2,6 +2,7 @@
 // Created by tian on 2020/4/14.
 //
 
+
 #include "VideoChannel.h"
 
 VideoChannel::VideoChannel() {
@@ -26,6 +27,9 @@ void VideoChannel::initVideoEncoder(int width, int height, int bitrate, int fps)
     mHeight = height;
     mBitrate = bitrate;
     mFps = fps;
+
+    y_len = width * height;
+    uv_len = y_len / 4;
 
     x264_param_t param;
     //ultrafast 最快
@@ -66,13 +70,95 @@ void VideoChannel::initVideoEncoder(int width, int height, int bitrate, int fps)
     x264_picture_alloc(pic_in, param.i_csp, param.i_width, param.i_height);
 
     videoEncoder = x264_encoder_open(&param);
-    if(videoEncoder) {
+    if (videoEncoder) {
         LOGE2("x264编码器打开成功");
     }
     pthread_mutex_unlock(&mutex);
 }
 
 void VideoChannel::encodeData(uint8_t *data) {
+    pthread_mutex_lock(&mutex);
+    //参考：https://www.jianshu.com/p/a2c09daee428    show/yuv_sequence.png
+    memcpy(pic_in->img.plane[0], data, y_len);
+    for (int i = 0; i < uv_len; ++i) {
+        *(pic_in->img.plane[1] + i) = *(data + y_len + 2 * i + 1); //u分量
+        *(pic_in->img.plane[2] + i) = *(data + y_len + 2 * i); //v分量
+    }
+    x264_nal_t *nals = 0;  //NAL: Network Abstract Layer(U: unit)
+    int pi_nal;
+    x264_picture_t pic_out;
+    int ret = x264_encoder_encode(videoEncoder, &nals, &pi_nal, pic_in, &pic_out);
+    if(ret < 0) {
+        LOGE2("x264编码失败");
+        pthread_mutex_unlock(&mutex);
+        return;
+    }
+    //参考：https://www.jianshu.com/p/0c882eca979c
+    //SPS：序列参数集，作用于一系列连续的编码图像。
+    //PPS：图像参数集，作用于编码视频序列中一个或多个独立的图像。
+    //IDR：一个序列的第一个图像叫做 IDR 图像（立即刷新图像），IDR 图像都是 I 帧图像。
+    //SPS 和 PPS 包含了初始化H.264解码器所需要的信息参数。
+    int sps_len, pps_len;
+    uint8_t sps[100];
+    uint8_t pps[100];
 
+    for (int i = 0; i < pi_nal; ++i) {
+        if(nals[i].i_type == NAL_SPS) {
+            sps_len = nals[i].i_payload - 4; //去掉起始码
+            memcpy(sps, nals[i].p_payload + 4, sps_len);
+        }else if(nals[i].i_type == NAL_PPS) {
+            pps_len = nals[i].i_payload - 4; //去掉起始码
+            memcpy(pps, nals[i].p_payload + 4, pps_len);
+            //sps 和 pps 的发送
+            senSpsPps(sps, pps, sps_len, pps_len);
+        }else {
+
+        }
+    }
+    
+    pthread_mutex_unlock(&mutex);
+}
+
+void VideoChannel::senSpsPps(uint8_t *sps, uint8_t *pps, int sps_len, int pps_len) {
+    //组装RTMPPacket包 参考：https://www.jianshu.com/p/0c882eca979c  视频包.png,视频解码序列包.png
+    RTMPPacket *packet = new RTMPPacket;
+    int body_size = 5 + 8 + sps_len + 3 + pps_len;
+    RTMPPacket_Alloc(packet, body_size);
+    int i = 0;
+    packet->m_body[i++] = 0x17;
+
+    packet->m_body[i++] = 0x00;
+    packet->m_body[i++] = 0x00;
+    packet->m_body[i++] = 0x00;
+    packet->m_body[i++] = 0x00;
+
+    packet->m_body[i++] = 0x01;
+
+    packet->m_body[i++] = sps[1];
+    packet->m_body[i++] = sps[2];
+    packet->m_body[i++] = sps[3];
+
+    packet->m_body[i++] = 0xFF;
+    packet->m_body[i++] = 0xE1;
+
+    packet->m_body[i++] = (sps_len >> 8) & 0xFF;
+    packet->m_body[i++] = sps_len & 0xFF;
+
+    memcpy(&packet->m_body[i], sps, sps_len);
+    i+= sps_len; //注意i要移位
+
+    packet->m_body[i++] = 0x01;
+
+    packet->m_body[i++] = (pps_len >> 8) & 0xFF;
+    packet->m_body[i++] = pps_len & 0xFF;
+
+    memcpy(&packet->m_body[i], pps, pps_len);
+
+    packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
+    packet->m_nBodySize = body_size;
+    packet->m_nTimeStamp = 0;
+    packet->m_hasAbsTimestamp = 0;
+    packet->m_nChannel = 10; //通道ID
+    packet->m_headerType = RTMP_PACKET_SIZE_MEDIUM;
 }
 
