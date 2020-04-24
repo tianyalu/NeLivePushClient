@@ -378,3 +378,11 @@ android {
 [音视频基础知识](https://www.jianshu.com/p/a2c09daee428)
 [音视频基础知识-图像篇](https://www.jianshu.com/p/0f0ff3d2f5d4)  
 
+## 六、音频推流
+视频频推流代码完成后，可以用在浏览器输入服务器地址查看效果，如下图所示：  
+![image](https://github.com/tianyalu/NeLivePushClient/raw/master/show/push_success.png)  
+可以在用`ffplay`命令预览直播推流效果：  
+```bash
+ffplay -i rtmp://47.115.6.127/myapp/
+```
+

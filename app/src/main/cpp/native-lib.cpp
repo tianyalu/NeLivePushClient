@@ -32,11 +32,21 @@ void ReleaseRTMPPacket(RTMPPacket **packet) {
         *packet = 0;
     }
 }
+
+void callback(RTMPPacket *packet) {
+    if(packet) {
+        if(packet->m_nTimeStamp == -1) { //表示需要时间戳
+            packet->m_nTimeStamp = RTMP_GetTime() - start_time;
+        }
+        packets.push(packet);
+    }
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_initNative(JNIEnv *env, jobject thiz) {
     video_channel = new VideoChannel;
+    video_channel->setVideoCallback(callback);
     packets.setReleaseCallback(ReleaseRTMPPacket);
-
 }
 
 void *task_start(void *args) {
@@ -118,6 +128,7 @@ Java_com_sty_ne_livepushclient_LivePusher_startLiveNative(JNIEnv *env, jobject t
     if(isStart) {
         return;
     }
+    isStart = 1;
     const char *path = env->GetStringUTFChars(path_, 0);
     //要进行服务器连接，创建子线程
     char *url = new char[strlen(path) + 1]; //"\0" //处理悬空指针问题

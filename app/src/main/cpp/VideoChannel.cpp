@@ -112,7 +112,8 @@ void VideoChannel::encodeData(uint8_t *data) {
             //sps 和 pps 的发送
             senSpsPps(sps, pps, sps_len, pps_len);
         }else {
-
+            //数据类型 真实数据部分 数据长度
+            sendFrame(nals[i].i_type, nals[i].p_payload, nals[i].i_payload);
         }
     }
     
@@ -120,7 +121,7 @@ void VideoChannel::encodeData(uint8_t *data) {
 }
 
 void VideoChannel::senSpsPps(uint8_t *sps, uint8_t *pps, int sps_len, int pps_len) {
-    //组装RTMPPacket包 参考：https://www.jianshu.com/p/0c882eca979c  视频包.png,视频解码序列包.png
+    //组装RTMPPacket包-sps,pps 参考：https://www.jianshu.com/p/0c882eca979c  视频包.png,视频解码序列包.png
     RTMPPacket *packet = new RTMPPacket;
     int body_size = 5 + 8 + sps_len + 3 + pps_len;
     RTMPPacket_Alloc(packet, body_size);
@@ -160,5 +161,54 @@ void VideoChannel::senSpsPps(uint8_t *sps, uint8_t *pps, int sps_len, int pps_le
     packet->m_hasAbsTimestamp = 0;
     packet->m_nChannel = 10; //通道ID
     packet->m_headerType = RTMP_PACKET_SIZE_MEDIUM;
+
+    videoCallback(packet);
+}
+
+void VideoChannel::setVideoCallback(VideoCallback callback) {
+    this->videoCallback = callback;
+}
+
+void VideoChannel::sendFrame(int type, uint8_t *payload, int iPayload) {
+    //起始码有两种
+    //00 00 00 01
+    //00 00 01
+    if(payload[2] == 0x00) { //判断是哪种起始码
+        payload += 4;
+        iPayload -= 4;
+    }else if(payload[2] == 0x01) {
+        payload += 3;
+        iPayload -= 3;
+    }
+
+    //组装RTMPPacket包-关键帧 参考：https://www.jianshu.com/p/0c882eca979c  视频包.png,视频解码序列包.png
+    RTMPPacket *packet = new RTMPPacket;
+    int body_size = 5 + 4 + iPayload;
+    RTMPPacket_Alloc(packet, body_size);
+    packet->m_body[0] = 0x27; //非关键帧
+    if(type == NAL_SLICE_IDR) { //关键帧
+        packet->m_body[0] = 0x17;
+    }
+    int i = 1;
+    packet->m_body[i++] = 0x01;
+    packet->m_body[i++] = 0x00;
+    packet->m_body[i++] = 0x00;
+    packet->m_body[i++] = 0x00;
+
+    packet->m_body[i++] = (iPayload >> 24) & 0xFF;
+    packet->m_body[i++] = (iPayload >> 16) & 0xFF;
+    packet->m_body[i++] = (iPayload >> 8) & 0xFF;
+    packet->m_body[i++] = iPayload & 0xFF;
+
+    memcpy(&packet->m_body[i], payload, iPayload);
+
+    packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
+    packet->m_nBodySize = body_size;
+    packet->m_nTimeStamp = -1;
+    packet->m_hasAbsTimestamp = 1;
+    packet->m_nChannel = 10; //通道ID
+    packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+
+    videoCallback(packet);
 }
 

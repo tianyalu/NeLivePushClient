@@ -12,6 +12,7 @@
 #include "macro.h"
 
 class VideoChannel {
+    typedef void(*VideoCallback)(RTMPPacket *packet);
 public:
     VideoChannel();
 
@@ -21,6 +22,8 @@ public:
 
 
     void encodeData(uint8_t *data);
+
+    void setVideoCallback(VideoCallback callback);
 
 private:
     pthread_mutex_t mutex;
@@ -32,8 +35,10 @@ private:
     x264_picture_t *pic_in = 0;
     int y_len;
     int uv_len;
-
+    VideoCallback videoCallback;
     void senSpsPps(uint8_t sps[100], uint8_t pps[100], int sps_len, int pps_len);
+
+    void sendFrame(int type, uint8_t *payload, int iPayload);
 };
 
 
