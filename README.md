@@ -368,21 +368,108 @@ android {
 
 编译运行成功代码集成成功。  
 
-## 三、`RTMP`视频数据格式
-参考：[`RTMP`视频数据格式](https://www.jianshu.com/p/0c882eca979c)  
 
-## 四、`FLV`文件格式
-参考：[`FLV`文件格式](https://www.jianshu.com/p/4f6ef65e8b97)  
+## 三、视频推流
+### 3.1 参考资料
+* [`RTMP`视频数据格式](https://www.jianshu.com/p/0c882eca979c)  
+* [`FLV`文件格式](https://www.jianshu.com/p/4f6ef65e8b97)
 
-## 五、扩展参考
+扩展参考：  
 [音视频基础知识](https://www.jianshu.com/p/a2c09daee428)
 [音视频基础知识-图像篇](https://www.jianshu.com/p/0f0ff3d2f5d4)  
 
-## 六、音频推流
-视频频推流代码完成后，可以用在浏览器输入服务器地址查看效果，如下图所示：  
+### 3.2 代码效果预览
+视频频推流代码完成后，可以在浏览器输入服务器地址查看效果，如下图所示：  
 ![image](https://github.com/tianyalu/NeLivePushClient/raw/master/show/push_success.png)  
-可以在用`ffplay`命令预览直播推流效果：  
+可以用`ffplay`命令预览直播推流效果：  
 ```bash
 ffplay -i rtmp://47.115.6.127/myapp/
 ```
+
+## 四、音频推流
+
+### 4.1 `FAAC`交叉编译、集成
+
+### 4.1.1 简介
+
+`FAAC(Freeware Advanced Audio Coder)`官网：[https://www.audiocoding.com/](https://www.audiocoding.com/)  
+
+下载地址为：[https://www.audiocoding.com/downloads.html](https://www.audiocoding.com/downloads.html) (FAAD2是解码库)
+
+> `FLV`文件分析器在`resource`目录下：`flvAnalyser v0.0.1.002.7z`,可以把`Calorie.flv`拖进去查看。  
+
+4.1.2 `FAAC`交叉编译步骤
+
+参考：[RTMP 音频推流（一）FAAC 交叉编译](https://www.jianshu.com/p/f87ac6aa6d63)  
+
+① 下载`FAAC`编码库源码：  
+
+```bash
+wget https://ayera.dl.sourceforge.net/project/faac/faac-src/faac-1.29/faac-1.29.9.2.tar.gz
+```
+
+② 解压：  
+
+```ba
+tar -xvf faac-1.29.9.2.tar.gz 
+```
+
+③ 进入解压目录，编写编译脚本`build_faac.sh`：  
+
+```bash
+[root@iZwz9ci7skvj0jj2sfdmqgZ software]# cd faac-1.29.9.2/
+[root@iZwz9ci7skvj0jj2sfdmqgZ faac-1.29.9.2]# vim build_faac.sh
+```
+
+```bash
+#!/bin/bash
+
+NDK_ROOT=/root/software/android-ndk-r17c
+PREFIX=`pwd`/android/armeabi-v7a
+
+TOOLCHAIN=$NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64
+CROSS_COMPILE=$TOOLCHAIN/bin/arm-linux-androideabi
+
+FLAGS="-isysroot $NDK_ROOT/sysroot -isystem $NDK_ROOT/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=17 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wa,--noexecstack -Wformat -Werror=format-security -std=c++11  -O0  -fPIC"
+
+export CC="$CROSS_COMPILE-gcc --sysroot=$NDK_ROOT/platforms/android-17/arch-arm"
+export CFLAGS="$FLAGS"
+
+./configure \
+	--prefix=$PREFIX \
+	--host=arm-linux \
+	--with-pic \
+	--enable-shared=no  
+
+make clean
+make install
+```
+
+④ 执行脚本，开始编译：  
+
+```bash
+chmod 777 build_faac.sh
+./build_faac.sh
+```
+
+编译产物输出在`./android/armeabi-v7a`目录下。  
+
+⑤ 将编译产物打包并传给`Windows`：  
+
+```bash
+[root@iZwz9ci7skvj0jj2sfdmqgZ faac-1.29.9.2]# cd ./android
+[root@iZwz9ci7skvj0jj2sfdmqgZ android]# ls
+armeabi-v7a
+[root@iZwz9ci7skvj0jj2sfdmqgZ android]# zip -r faac.zip *
+[root@iZwz9ci7skvj0jj2sfdmqgZ android]# ls
+armeabi-v7a  faac.zip
+```
+
+同样可以借助`xshell` 的`xftp` 从服务器下载`x264.zip`到`Windows`环境。
+
+### 4.2 音频数据编码
+
+
+
+### 4.3 音频推流
 

@@ -169,3 +169,24 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_releaseNative(JNIEnv *env, jobject thiz) {
     DELETE(video_channel);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sty_ne_livepushclient_LivePusher_initAudioEncoderNative(JNIEnv *env, jobject thiz,
+                                                                 jint sample_rate_in_hz,
+                                                                 jint channel_config) {
+    // TODO: implement initAudioEncoderNative()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_sty_ne_livepushclient_LivePusher_pushAudioNative(JNIEnv *env, jobject thiz,
+                                                          jbyteArray data) {
+    // TODO: implement pushAudioNative()
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_sty_ne_livepushclient_LivePusher_getInputSamplesNative(JNIEnv *env, jobject thiz) {
+    // TODO: implement getInputSamplesNative()
+}
