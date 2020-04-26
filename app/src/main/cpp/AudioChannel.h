@@ -6,6 +6,9 @@
 #define NELIVEPUSHCLIENT_AUDIOCHANNEL_H
 
 #include <cstdint>
+#include <sys/types.h>
+#include <faac.h>
+#include "macro.h"
 
 class AudioChannel {
 
@@ -17,7 +20,15 @@ public:
     void initAudioEncoder(int sample_rate, int channels);
     void encodeData(int8_t *data);
 
+    int getInputSamples();
+
 private:
+    int mChannels;
+
+    u_long inputSamples;
+    u_long maxOutputBytes;
+    faacEncHandle audioEncoder = 0;
+    u_char *buffer = 0;
 
 };
 

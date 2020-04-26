@@ -5,6 +5,7 @@
 #include "VideoChannel.h"
 #include "safe_queue.h"
 #include "macro.h"
+#include "AudioChannel.h"
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_sty_ne_livepushclient_MainActivity_stringFromJNI(
@@ -169,6 +170,7 @@ Java_com_sty_ne_livepushclient_LivePusher_pushVideoNative(JNIEnv *env, jobject t
 extern "C" JNIEXPORT void JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_releaseNative(JNIEnv *env, jobject thiz) {
     DELETE(video_channel);
+    DELETE(audio_channel);
 }
 
 extern "C"
@@ -196,5 +198,8 @@ Java_com_sty_ne_livepushclient_LivePusher_pushAudioNative(JNIEnv *env, jobject t
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_getInputSamplesNative(JNIEnv *env, jobject thiz) {
-    // TODO: implement getInputSamplesNative()
+    if(audio_channel) {
+        return audio_channel->getInputSamples();
+    }
+    return -1;
 }
