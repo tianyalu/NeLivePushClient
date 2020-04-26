@@ -20,6 +20,7 @@ Java_com_sty_ne_livepushclient_MainActivity_stringFromJNI(
 }
 
 VideoChannel *video_channel = 0;
+AudioChannel *audio_channel = 0;
 SafeQueue<RTMPPacket *> packets;
 bool isStart;
 pthread_t pid_start;
@@ -173,16 +174,23 @@ Java_com_sty_ne_livepushclient_LivePusher_releaseNative(JNIEnv *env, jobject thi
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_initAudioEncoderNative(JNIEnv *env, jobject thiz,
-                                                                 jint sample_rate_in_hz,
-                                                                 jint channel_config) {
-    // TODO: implement initAudioEncoderNative()
+                                                                 jint sample_rate,
+                                                                 jint channels) {
+    if(audio_channel) {
+        audio_channel->initAudioEncoder(sample_rate, channels);
+    }
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_pushAudioNative(JNIEnv *env, jobject thiz,
-                                                          jbyteArray data) {
-    // TODO: implement pushAudioNative()
+                                                          jbyteArray data_) {
+    if(!audio_channel || !isStart) {
+        return;
+    }
+    jbyte *data = env->GetByteArrayElements(data_, 0);
+    audio_channel->encodeData(data);
+    env->ReleaseByteArrayElements(data_, data, 0);
 }
 
 extern "C"

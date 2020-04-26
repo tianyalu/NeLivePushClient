@@ -17,7 +17,8 @@ add_library( # Sets the name of the library.
              SHARED
              # Provides a relative path to your source file(s).
              native-lib.cpp
-             VideoChannel.cpp)
+             VideoChannel.cpp
+             AudioChannel.cpp)
 
 target_link_libraries( # Specifies the target library.
                        native-lib
