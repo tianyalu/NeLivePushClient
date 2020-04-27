@@ -3,6 +3,8 @@
 //
 
 
+
+
 #include "AudioChannel.h"
 
 AudioChannel::AudioChannel() {
@@ -10,7 +12,11 @@ AudioChannel::AudioChannel() {
 }
 
 AudioChannel::~AudioChannel() {
-
+    DELETE(buffer);
+    if(audioEncoder) {
+        faacEncClose(audioEncoder);
+        audioEncoder = 0;
+    }
 }
 
 void AudioChannel::initAudioEncoder(int sample_rate, int channels) {
@@ -44,7 +50,68 @@ int AudioChannel::getInputSamples() {
 }
 
 void AudioChannel::encodeData(int8_t *data) {
+    //faac编码，返回编码后数据的字节长度
+    int byteLen = faacEncEncode(audioEncoder, reinterpret_cast<int32_t *>(data), inputSamples, buffer,
+                  maxOutputBytes);
+    if(byteLen > 0) {
+        LOGE2("音频编码成功");
+        //组RTMP包
+        //参考：https://www.jianshu.com/p/f87ac6aa6d63 音频trmp包.png（此处没有发“解码信息”那一行，经测试不发也行）
+        RTMPPacket *packet = new RTMPPacket;
+        int body_size = 2 + byteLen;
+        RTMPPacket_Alloc(packet, body_size);
 
+        packet->m_body[0] = 0xAF; //双声道
+        if(mChannels == 1) {
+            packet->m_body[0] = 0xAE; //单声道
+        }
+        packet->m_body[1] = 0x01;
+        memcpy(&packet->m_body[2], buffer, byteLen);
+
+        packet->m_packetType = RTMP_PACKET_TYPE_AUDIO;
+        packet->m_nBodySize = body_size;
+        packet->m_nTimeStamp = -1;
+        packet->m_hasAbsTimestamp = 1;
+        packet->m_nChannel = 11;
+        packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+
+        audioCallback(packet);
+    }
+}
+
+void AudioChannel::setAudioCallback(AudioChannel::AudioCallback callback) {
+    this->audioCallback = callback;
+}
+
+RTMPPacket *AudioChannel::getAudioSeqHeader() {
+    u_char *ppBuffer;
+    u_long byteLen;
+    faacEncGetDecoderSpecificInfo(audioEncoder, &ppBuffer, &byteLen);
+
+    //组RTMP包
+    RTMPPacket *packet = new RTMPPacket();
+    int body_size = 2 + byteLen;
+    RTMPPacket_Alloc(packet, body_size);
+
+    packet->m_body[0] = 0xAF; //双声道
+    if(mChannels == 1) {
+        packet->m_body[0] = 0xAE; //单声道
+    }
+
+    packet->m_body[1] = 0x00; //序列头配置信息为0x00
+    memcpy(&packet->m_body[2], ppBuffer, byteLen);
+
+    packet->m_packetType = RTMP_PACKET_TYPE_AUDIO;
+    packet->m_nBodySize = body_size;
+    packet->m_nTimeStamp = 0;
+    packet->m_hasAbsTimestamp = 1;
+    packet->m_nChannel = 11;
+    packet->m_headerType = RTMP_PACKET_SIZE_LARGE;
+
+    //audioCallback(packet);
+
+    //return nullptr;
+    return packet;
 }
 
 

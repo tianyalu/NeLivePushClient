@@ -8,10 +8,13 @@
 #include <cstdint>
 #include <sys/types.h>
 #include <faac.h>
+#include <rtmp.h>
+#include <cstring>
 #include "macro.h"
 
-class AudioChannel {
 
+class AudioChannel {
+    typedef void(*AudioCallback)(RTMPPacket *packet);
 public:
     AudioChannel();
 
@@ -22,6 +25,10 @@ public:
 
     int getInputSamples();
 
+    void setAudioCallback(AudioCallback callback);
+
+    RTMPPacket *getAudioSeqHeader();
+
 private:
     int mChannels;
 
@@ -29,7 +36,7 @@ private:
     u_long maxOutputBytes;
     faacEncHandle audioEncoder = 0;
     u_char *buffer = 0;
-
+    AudioCallback audioCallback;
 };
 
 

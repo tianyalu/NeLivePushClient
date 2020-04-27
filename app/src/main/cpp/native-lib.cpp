@@ -46,8 +46,10 @@ void callback(RTMPPacket *packet) {
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_sty_ne_livepushclient_LivePusher_initNative(JNIEnv *env, jobject thiz) {
-    video_channel = new VideoChannel;
+    video_channel = new VideoChannel();
+    audio_channel = new AudioChannel();
     video_channel->setVideoCallback(callback);
+    audio_channel->setAudioCallback(callback);
     packets.setReleaseCallback(ReleaseRTMPPacket);
 }
 
@@ -93,6 +95,8 @@ void *task_start(void *args) {
 
         //跟服务器连接通了
         packets.setWork(1);
+//        callback(audio_channel->getAudioSeqHeader());
+
         RTMPPacket *packet = 0;
         while (isStart) {
             int ret = packets.pop(packet);
