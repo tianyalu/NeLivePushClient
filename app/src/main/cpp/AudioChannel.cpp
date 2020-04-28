@@ -83,6 +83,7 @@ void AudioChannel::setAudioCallback(AudioChannel::AudioCallback callback) {
     this->audioCallback = callback;
 }
 
+//该方法没有用到
 RTMPPacket *AudioChannel::getAudioSeqHeader() {
     u_char *ppBuffer;
     u_long byteLen;

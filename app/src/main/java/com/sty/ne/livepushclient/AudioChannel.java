@@ -26,11 +26,11 @@ public class AudioChannel {
 
         executorService = Executors.newSingleThreadExecutor();
         //先进行音频编码器的初始化
-        pusher.initAudioEncoderNative(44100, channels); //第二个参数是声道数
+        mPusher.initAudioEncoderNative(44100, channels); //第二个参数是声道数
         int minBufferSize = AudioRecord.getMinBufferSize(44100, channelConfig,
                 AudioFormat.ENCODING_PCM_16BIT) * 2; //避免溢出，通常*2
         //获取编码器的输入样本数
-        inputSamples = pusher.getInputSamplesNative() * 2; //16bit = 2字节
+        inputSamples = mPusher.getInputSamplesNative() * 2; //16bit = 2字节
 
         audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, 44100, channelConfig,
                 AudioFormat.ENCODING_PCM_16BIT, Math.max(minBufferSize, inputSamples));
