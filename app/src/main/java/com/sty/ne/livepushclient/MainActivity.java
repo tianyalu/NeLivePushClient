@@ -74,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
     private void requestPermissions() {
         if(!PermissionUtils.checkPermissions(this, needPermissions)) {
             PermissionUtils.requestPermissions(this, needPermissions);
+        }else {
+            mPusher.rePreview();
         }
     }
 
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             if(!PermissionUtils.verifyPermissions(grantResults)) {
                 PermissionUtils.showMissingPermissionDialog(this);
             }else {
-                startLive();
+                mPusher.rePreview();
             }
         }
     }

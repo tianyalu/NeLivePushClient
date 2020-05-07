@@ -21,6 +21,10 @@ public class LivePusher {
         mVideoChannel.setPreviewDisplay(surfaceHolder);
     }
 
+    public void rePreview() {
+        mVideoChannel.rePreview();
+    }
+
     /**
      * 开始直播，先准备好编码器
      * @param path rtmp推流地址： rtmp://47.115.6.127/myapp/

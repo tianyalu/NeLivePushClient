@@ -30,6 +30,11 @@ public class VideoChannel implements CameraHelper.OnChangedSizeListener, Camera.
         cameraHelper.switchCamera();
     }
 
+    public void rePreview() {
+        cameraHelper.stopPreview();
+        cameraHelper.startPreview();
+    }
+
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
         //推送视频数据
