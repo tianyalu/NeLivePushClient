@@ -126,40 +126,44 @@ void VideoChannel::senSpsPps(uint8_t *sps, uint8_t *pps, int sps_len, int pps_le
     int body_size = 5 + 8 + sps_len + 3 + pps_len;
     RTMPPacket_Alloc(packet, body_size);
     int i = 0;
+    //固定头
     packet->m_body[i++] = 0x17;
-
+    //类型
     packet->m_body[i++] = 0x00;
     packet->m_body[i++] = 0x00;
     packet->m_body[i++] = 0x00;
     packet->m_body[i++] = 0x00;
-
+    //版本
     packet->m_body[i++] = 0x01;
-
+    //编码规格
     packet->m_body[i++] = sps[1];
     packet->m_body[i++] = sps[2];
     packet->m_body[i++] = sps[3];
 
     packet->m_body[i++] = 0xFF;
+    //整个sps
     packet->m_body[i++] = 0xE1;
-
+    //sps长度
     packet->m_body[i++] = (sps_len >> 8) & 0xFF;
     packet->m_body[i++] = sps_len & 0xFF;
 
     memcpy(&packet->m_body[i], sps, sps_len);
     i+= sps_len; //注意i要移位
 
+    //pps
     packet->m_body[i++] = 0x01;
 
     packet->m_body[i++] = (pps_len >> 8) & 0xFF;
     packet->m_body[i++] = pps_len & 0xFF;
-
     memcpy(&packet->m_body[i], pps, pps_len);
 
     packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
     packet->m_nBodySize = body_size;
+    //sps pps没有时间戳
     packet->m_nTimeStamp = 0;
+    //不使用绝对时间
     packet->m_hasAbsTimestamp = 0;
-    packet->m_nChannel = 10; //通道ID
+    packet->m_nChannel = 10; //通道ID （尽量避开rtmp.c中使用的）
     packet->m_headerType = RTMP_PACKET_SIZE_MEDIUM;
 
     videoCallback(packet);
@@ -185,21 +189,24 @@ void VideoChannel::sendFrame(int type, uint8_t *payload, int iPayload) {
     RTMPPacket *packet = new RTMPPacket;
     int body_size = 5 + 4 + iPayload;
     RTMPPacket_Alloc(packet, body_size);
+
     packet->m_body[0] = 0x27; //非关键帧
     if(type == NAL_SLICE_IDR) { //关键帧
         packet->m_body[0] = 0x17;
     }
     int i = 1;
+    //类型
     packet->m_body[i++] = 0x01;
+    //时间戳
     packet->m_body[i++] = 0x00;
     packet->m_body[i++] = 0x00;
     packet->m_body[i++] = 0x00;
-
+    //数据长度 int 4个长度
     packet->m_body[i++] = (iPayload >> 24) & 0xFF;
     packet->m_body[i++] = (iPayload >> 16) & 0xFF;
     packet->m_body[i++] = (iPayload >> 8) & 0xFF;
     packet->m_body[i++] = iPayload & 0xFF;
-
+    //图片数据
     memcpy(&packet->m_body[i], payload, iPayload);
 
     packet->m_packetType = RTMP_PACKET_TYPE_VIDEO;
