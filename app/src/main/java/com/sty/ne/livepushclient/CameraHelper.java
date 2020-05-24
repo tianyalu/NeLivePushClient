@@ -67,6 +67,8 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
             //设置摄像头图像传感器的角度、方向
             setPreviewOrientation(parameters);
             mCamera.setParameters(parameters);
+            //可以看出无论是哪种排列方式，YUV420的数据量都为: wh+w/2h/2+w/2h/2 即为wh*3/2
+            //参考：[NV21与I420](https://www.jianshu.com/p/9ad01d4f824c)
             cameraBuffer = new byte[mWidth * mHeight * 3 / 2];
             cameraBuffer_ = new byte[mWidth * mHeight * 3 / 2];
             //数据缓冲区
@@ -190,6 +192,8 @@ public class CameraHelper implements Camera.PreviewCallback, SurfaceHolder.Callb
         camera.addCallbackBuffer(cameraBuffer);
     }
 
+    //参考：[NV21与I420](https://www.jianshu.com/p/9ad01d4f824c)
+    //这里仅仅是旋转或旋转+镜像操作，并没有将NV21转为I420
     private void rotation90(byte[] data) {
         int index = 0;
         int ySize = mWidth * mHeight;
